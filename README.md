@@ -29,7 +29,7 @@ The solution to this is **Reactor**.
 ## Fire and forget
 
 **Reactor** is a fire-and-forget solution.  Once started, if it has been
-configured propperly, it will start monitoring one or more locations
+configured properly, it will start monitoring one or more locations
 (or "watchpoints") on your file system, and will ensure that any cloud storage
 (or "remotes" in rclone parlance) associated with those locations are an
 exact mirror.  You can configure multiple watchpoints, and each watchpoint
@@ -74,7 +74,7 @@ seconds faster).
 
 One last thing worth mentioning:  **Reactor** uses a modified version of the
 golang/exp/winfsnotify package.  Much to my surprise, the original package
-only watched changes in single folder, ignore all events of its child
+only watched changes in a single folder, ignoring all events of its child
 folders and files.  I enhanced winfsnotify to allow it to report on events
 in the entire subtree of a watched folder--a critical requirement of **Reactor**.
 
@@ -85,13 +85,12 @@ to use the official version.
 
 ## Building
 
-On Winodws, compile with: `go generate & go build -ldflags "-H=windowsgui -s -w" .`
+On Windows, compile with: `go generate & go build -ldflags "-H=windowsgui -s -w" .`
 
 For most of the dependencies, the Go system will pull down all modules that
-**Reactor** requires as part of the build process.
-
-The one exception is **goversioninfo**.  You wil need to manually retrieve 
-this package so the first 'generate' step succeeds.  You can do this with
+**Reactor** requires as part of the build process.  The one exception is
+**goversioninfo**.  You wil need to manually retrieve this package so the first
+'generate' step succeeds.  You can do this with
 
 `go get -u github.com/josephspurrier/goversioninfo/cmd/goversioninfo`
 
