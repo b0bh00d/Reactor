@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="style.xsl"?>
+<Reactor>
+  <!--
+    Do everything except actually launch rclone to synchronize an event.  Useful for ensuring your configuration
+    does everything you intend it to.
+  -->
+  <dryRun value="false"/>
+  <!--
+    Capture Reactor log output to a file with this option. Note that the attributes for 'log' are all optional,
+    so you can specify them individually and independently.  Of course, if you don't specify a file, then you'll
+    be pretty much blind to what is happening with Reactor unless you launch it from the command line.
+  -->
+  <log file="M:/Projects/Go/Reactor/Reactor.log" level="debug"/>
+  <!-- These ignores settings are applied directly to filesystem events as they arrive. -->
+  <globalIgnores>
+    <!-- Ignore changes to ownCloud/Nextcloud metadata files -->
+    <ignore>^\._sync_</ignore>
+  </globalIgnores>
+  <!--
+    Ignore messages can inordinately fill the log output; this will suppress them globally.  If you want to
+    know what Reactor is ignoring, then disable this.
+  -->
+  <suppressIgnoreEvents value="true"/>
+  <!--
+    Normally, sync logs will be deleted if the rclone result code is zero (0).  A 'true' value here will cause
+    log files to be retained in the %TEMP% folder, regardless.  Note that you will need to manage (i.e.,
+    delete) them yourself.
+  -->
+  <retainSyncLogs value="false"/>
+  <!--
+    A watchpoint is a location on the file system that will be synchronized to a corresponding location on a
+    cloud service.  The target cloud location needs to have been configured already with rclone.
+  
+    It is HIGHLY recommended that you not use Reactor to INITIALIZE storage on a cloud service.  Such actions
+    can easily take many hours, if not days.  Reactor is intended to maintain incremental updates of existing
+    storage, not full transfers of massive amounts of data.
+  -->
+  <watchpoints>
+    <watchpoint path="Y:/Nextcloud">
+      <!-- Reactor can maintain incremental updates across multiple rclone remotes. -->
+      <remotes>
+        <remote>
+          <!--
+            rclone should have one or more remote target entries in its configuration file; 'id'' MUST match
+            one of those
+          -->
+          <id>psecret</id>
+          <!--
+            You can add rclone options that will be specific to this remote or the files in this watchpoint.
+            Be careful which options you provide; Reactor uses its own in order to function, so you need to
+            take pains not to duplicate (and thus, override) them here.
+          -->
+          <options>--drive-use-trash=false --exclude ._sync_*</options>
+        </remote>
+      </remotes>
+      <!--
+        These ignores are applied at the watchpoint level; i.e., each watchpoint can have its own unique
+        series of ignores.
+      -->
+      <ignores>
+        <ignore>rclone.conf.*</ignore>
+        <!-- Microsoft Word creates temporary files with this signature prefix. -->
+        <ignore>^\~\$.*</ignore>
+      </ignores>
+      <!--
+        As file events occur on a watchpoint, there may be a flurry that could (unnecessarily) cause multiple
+        sync tasks to be queued on the same watchpoint location.  In order to batch such events, you can specify
+        the number of seconds of "calm" that must pass on the watchpoint before synchronizing is scheduled.
+
+        If more events occur on the watchpoint before this timer decays, it will be reset.
+      -->
+      <syncDelay value="10"/>
+      <!--
+        On startup, each watchpoint can be configured to perform a complete sync so it is has a "clean slate"
+        for subsequent short syncs.  It is highly recommended that this be enabled if you are using Reactor
+        in a fire-and-forget scenario (i.e., start on log-in) so the incremental syncs keep the remote exactly
+        mirrored.
+
+        Initial updates are executed in parallel among the configured rclone remotes.
+      -->
+      <cleanSlate value="true"/>
+      <!--
+        A process predicate causes file events that match a regular expression to be discarded while the
+        indicated processs is currently running.  This is useful in cases where the process constantly makes
+        file modifications while it is runnning, so you can avoid numerous rclone calls.
+
+        Note that you should NOT apply this to a process that does not perform one or more file modifications on
+        exit, otherwise sync events will likely not be triggered.  If you are in doubt, enable the 'dryRun' option
+        and then watch the log output of Reactor to see how the process behaves with regard to file changes.
+      -->
+      <processPredicates>
+        <predicate key=".+Quicken.+" value="qw.exe"/>
+        <predicate key=".+Thunderbird.+" value="thunderbird.exe"/>
+      </processPredicates>
+    </watchpoint>
+  </watchpoints>
+</Reactor>
