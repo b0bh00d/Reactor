@@ -95,24 +95,29 @@ func processSyncEvent(w watchData, quit <-chan bool) {
 
 							remotes := make([]*remoteData, 0)
 							for j := range (*w.points)[candidates[i]].remotes {
-								remotes = append(remotes, &(*w.points)[candidates[i]].remotes[j])
+								remote := &(*w.points)[candidates[i]].remotes[j]
+								if remote.incrUpdates {
+									remotes = append(remotes, &(*w.points)[candidates[i]].remotes[j])
+								}
 							}
 
-							w.syncMutex.Lock()
+							if len(remotes) != 0 {
+								w.syncMutex.Lock()
 
-							for path := range syncEvents {
-								l = syncEvents[path]
-								plural := ""
-								if l > 1 {
-									plural = "s"
+								for path := range syncEvents {
+									l = syncEvents[path]
+									plural := ""
+									if l > 1 {
+										plural = "s"
+									}
+									for k := range remotes {
+										log.Printf("info: Submitting \"%s:%s\" for %d event%s.", filepath.ToSlash(path), remotes[k].id, l, plural)
+									}
+									*w.syncTasks = append(*w.syncTasks, syncTask{candidates[i], remotes, filepath.ToSlash(path), (*w.points)[candidates[i]]})
 								}
-								for k := range remotes {
-									log.Printf("info: Submitting \"%s:%s\" for %d event%s.", filepath.ToSlash(path), remotes[k].id, l, plural)
-								}
-								*w.syncTasks = append(*w.syncTasks, syncTask{candidates[i], remotes, filepath.ToSlash(path), (*w.points)[candidates[i]]})
+
+								w.syncMutex.Unlock()
 							}
-
-							w.syncMutex.Unlock()
 
 							for key := range (*w.points)[candidates[i]].events {
 								delete((*w.points)[candidates[i]].events, key)

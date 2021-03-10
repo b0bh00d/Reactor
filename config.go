@@ -88,7 +88,7 @@ func loadConfig(config configData) {
 		if !logCaptured {
 			colog.SetOutput(wincolog.Stdout())
 		} else {
-			log.Println("info: ====================================================")
+			log.Println("info: =[start]============================================")
 		}
 
 		if element := root.SelectElement("globalIgnores"); element != nil {
@@ -159,17 +159,6 @@ func loadConfig(config configData) {
 						}
 					}
 
-					cleanSlate := false
-					if cS := wp.SelectElement("cleanSlate"); cS != nil {
-						attrMap := getAttrs(cS)
-						value, ok := attrMap["value"]
-						if ok {
-							if value == "true" {
-								cleanSlate = true
-							}
-						}
-					}
-
 					predicates := make([]processPredicate, 0)
 					if pP := wp.SelectElement("processPredicates"); pP != nil {
 						for _, pred := range pP.SelectElements("predicate") {
@@ -186,18 +175,42 @@ func loadConfig(config configData) {
 					remotes := make([]remoteData, 0)
 					if rmts := wp.SelectElement("remotes"); rmts != nil {
 						for _, rmt := range rmts.SelectElements("remote") {
+							var r remoteData
+
 							if id := rmt.SelectElement("id"); id != nil {
-								var r remoteData
 								r.id = id.Text()
-								r.options = make([]string, 0)
-								opts := rmt.SelectElement("options")
-								if opts != nil {
-									r.options = strings.Split(opts.Text(), " ")
-								}
-								remotes = append(remotes, r)
 							} else {
 								log.Fatal("Remote defined without specifying an id!")
 							}
+
+							r.options = make([]string, 0)
+							if opts := rmt.SelectElement("options"); opts != nil {
+								r.options = strings.Split(opts.Text(), " ")
+							}
+
+							r.cleanSlate = false
+							if cS := rmt.SelectElement("cleanSlate"); cS != nil {
+								attrMap := getAttrs(cS)
+								value, ok := attrMap["value"]
+								if ok {
+									if value == "true" {
+										r.cleanSlate = true
+									}
+								}
+							}
+
+							r.incrUpdates = false
+							if iU := rmt.SelectElement("incrementalUpdates"); iU != nil {
+								attrMap := getAttrs(iU)
+								value, ok := attrMap["value"]
+								if ok {
+									if value == "true" {
+										r.incrUpdates = true
+									}
+								}
+							}
+
+							remotes = append(remotes, r)
 						}
 					}
 
@@ -205,7 +218,7 @@ func loadConfig(config configData) {
 						log.Fatalf("Watchpoint \"%s\" contains no defined remotes!", wpPath)
 					}
 
-					(*config.watchPoints)[wpPath] = &watchPoint{wpPath, remotes, ignores, 0, syncDelay, make(map[string]bool), cleanSlate, predicates}
+					(*config.watchPoints)[wpPath] = &watchPoint{wpPath, remotes, ignores, 0, syncDelay, make(map[string]bool), predicates}
 				}
 			}
 		}

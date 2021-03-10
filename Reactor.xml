@@ -52,6 +52,22 @@
             take pains not to duplicate (and thus, override) them here.
           -->
           <options>--drive-use-trash=false --exclude ._sync_*</options>
+          <!--
+            On startup, each watchpoint remote can be configured to perform a complete sync so it is has a
+            "clean slate".  This can be for a one-off (e.g., full sync once a day), or it can serve as a sane
+            stateu for subsequent incremental updates.  It is highly recommended that this be enabled if you
+            are using Reactor in a fire-and-forget scenario (i.e., start on log-in) so any incremental syncs
+            keep the remote exactly mirrored.
+
+            Clean-slate updates are executed in parallel among the configured rclone remotes.
+          -->
+          <cleanSlate value="true"/>
+          <!--
+            The heart and soul of Reactor is the incremental update.  While having clean-slate updates occur
+            when Reactor starts is highly useful in and of itself, performing incremental updates in reaction
+            to file-system changes keeps your remote instantly synchronized with the state of the local system.
+          -->
+          <incrementalUpdates value="true"/>
         </remote>
       </remotes>
       <!--
@@ -71,15 +87,6 @@
         If more events occur on the watchpoint before this timer decays, it will be reset.
       -->
       <syncDelay value="10"/>
-      <!--
-        On startup, each watchpoint can be configured to perform a complete sync so it is has a "clean slate"
-        for subsequent short syncs.  It is highly recommended that this be enabled if you are using Reactor
-        in a fire-and-forget scenario (i.e., start on log-in) so the incremental syncs keep the remote exactly
-        mirrored.
-
-        Initial updates are executed in parallel among the configured rclone remotes.
-      -->
-      <cleanSlate value="true"/>
       <!--
         A process predicate causes file events that match a regular expression to be discarded while the
         indicated processs is currently running.  This is useful in cases where the process constantly makes

@@ -15,8 +15,10 @@ import (
 )
 
 type remoteData struct {
-	id      string
-	options []string
+	id          string
+	options     []string
+	cleanSlate  bool
+	incrUpdates bool
 }
 
 type syncTask struct {
@@ -38,7 +40,6 @@ type watchPoint struct {
 	lastEvent  int64
 	syncDelay  int
 	events     map[string]bool
-	cleanSlate bool
 	predicates []processPredicate
 }
 
@@ -61,7 +62,7 @@ type watchData struct {
 
 func main() {
 	onExit := func() {
-		log.Println("info: onExit() triggered by systray")
+		log.Println("info: =[exit]=============================================")
 	}
 
 	systray.Run(onReady, onExit)
@@ -117,15 +118,17 @@ func run(mQuitOrig *systray.MenuItem) {
 
 	w := watchData{watcher, &eventsMutex, &eventFIFO, &eventsAvailableChan, &wg, &pointsMutex, &watchPoints, &syncMutex, &syncTasks, &globalIgnores, suppressIgnores, retainSyncLogs, dryRun}
 
-	// do we need to perform any "clean slate" synchronizations?
-	for key := range watchPoints {
-		if watchPoints[key].cleanSlate {
-			remotes := make([]*remoteData, 0)
-			for i := range (*w.points)[key].remotes {
-				remote := &(*w.points)[key].remotes[i]
+	// do we need to perform any "clean slate" synchronizations on any remotes?
+	for key := range *w.points {
+		remotes := make([]*remoteData, 0)
+		for i := range (*w.points)[key].remotes {
+			remote := &(*w.points)[key].remotes[i]
+			if remote.cleanSlate {
 				log.Printf("warn: Scheduling \"%s:%s\" for a clean-slate sync.", key, remote.id)
 				remotes = append(remotes, remote)
 			}
+		}
+		if len(remotes) != 0 {
 			*w.syncTasks = append(*w.syncTasks, syncTask{key, remotes, key, (*w.points)[key]})
 		}
 	}
@@ -146,18 +149,30 @@ func run(mQuitOrig *systray.MenuItem) {
 
 	const watchMask = winfsnotify.FS_ALL_EVENTS & ^(winfsnotify.FS_ATTRIB|winfsnotify.FS_CLOSE) | winfsnotify.FS_IGNORED
 	for key := range watchPoints {
-		log.Printf("info: Starting filesystem watch: \"%s\"\n", key)
-		err = watcher.AddDeepWatch(key, watchMask)
-		if err != nil {
-			log.Fatalf("Watcher.Watch() failed: %s", err)
+		remotes := make([]*remoteData, 0)
+		for i := range (*w.points)[key].remotes {
+			remote := &(*w.points)[key].remotes[i]
+			if remote.incrUpdates {
+				remotes = append(remotes, remote)
+			}
 		}
-		defer watcher.RemoveWatch(key)
+
+		if len(remotes) != 0 {
+			log.Printf("info: Starting filesystem watch on \"%s\"\n", key)
+			err = watcher.AddDeepWatch(key, watchMask)
+			if err != nil {
+				log.Fatalf("Watcher.Watch() failed: %s", err)
+			}
+			defer watcher.RemoveWatch(key)
+		} else {
+			log.Printf("warn: Watchpoint \"%s\" lacks any remotes for incremental updates.", key)
+		}
 	}
 
 	// wait for the Quit option to trigger
 	<-mQuitOrig.ClickedCh
 
-	log.Println("info: Quit triggered from systray")
+	log.Println("info: =[quit]=============================================")
 
 	quitWatcherChan <- true // watchFilesystem())
 	quitEventChan <- true   // processFilesystem()
