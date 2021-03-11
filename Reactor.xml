@@ -19,12 +19,12 @@
   </globalIgnores>
   <!--
     Ignore messages can inordinately fill the log output; this will suppress them globally.  If you want to
-    know what Reactor is ignoring, then disable this.
+    know what Reactor is ignoring, then disable this by setting it to false.
   -->
   <suppressIgnoreEvents value="true"/>
   <!--
     Normally, sync logs will be deleted if the rclone result code is zero (0).  A 'true' value here will cause
-    log files to be retained in the %TEMP% folder, regardless.  Note that you will need to manage (i.e.,
+    log files to be retained in the %TEMP% folder, regardless.  Note that you will need to manage (e.g.,
     delete) them yourself.
   -->
   <retainSyncLogs value="false"/>
@@ -55,7 +55,7 @@
           <!--
             On startup, each watchpoint remote can be configured to perform a complete sync so it is has a
             "clean slate".  This can be for a one-off (e.g., full sync once a day), or it can serve as a sane
-            stateu for subsequent incremental updates.  It is highly recommended that this be enabled if you
+            state for subsequent incremental updates.  It is highly recommended that this be enabled if you
             are using Reactor in a fire-and-forget scenario (i.e., start on log-in) so any incremental syncs
             keep the remote exactly mirrored.
 
@@ -80,9 +80,10 @@
         <ignore>^\~\$.*</ignore>
       </ignores>
       <!--
-        As file events occur on a watchpoint, there may be a flurry that could (unnecessarily) cause multiple
-        sync tasks to be queued on the same watchpoint location.  In order to batch such events, you can specify
-        the number of seconds of "calm" that must pass on the watchpoint before synchronizing is scheduled.
+        As file events occur on a watchpoint, there may be a flurry of reports that could (unnecessarily) cause
+        multiple sync tasks to be queued on the same watchpoint location.  In order to batch such events, you
+        can specify the number of seconds of "calm" that must pass on the watchpoint before synchronizing is
+        scheduled.
 
         If more events occur on the watchpoint before this timer decays, it will be reset.
       -->
