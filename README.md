@@ -47,7 +47,7 @@ can find it on startup.
 ## rclone and Remotes
 
 **Reactor** expects your rclone executable to be visible in your %PATH%
-setting such that executing "rclone --version" from a command line
+setting such that executing `rclone --version` from a command line
 will produce rclone output (and not an error).
 
 It goes without saying that you need to configure your remote cloud
@@ -58,7 +58,7 @@ at it.  **Reactor** is really designed to handle *incremental* updates
 to existing synchornized data.  Expecting **Reactor** to peform the
 initial upload of your tens of gigabytes of data would be a silly
 use of the tool, and the gods will weep at your foolishness.  Use
-rclone directly for that purpose.
+rclone directly to initialize environments.
 
 ## Parallelization
 
@@ -67,8 +67,8 @@ between watchpoints (one won't start until a previous one completes),
 but will parallelize synchronizations among multiple remotes associated
 with the same watchpoint.  I tested this with two remotes; the time to
 sync took longer on each, but the total time to complete all uploads was
-equivalent to running them sequentially (and sometimes even ran a few
-seconds faster).
+equivalent to running them sequentially (and on good days, sometimes even
+ran a few seconds faster).
 
 ## winfsnotify
 
