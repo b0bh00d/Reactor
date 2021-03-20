@@ -118,22 +118,10 @@ func run(mQuitOrig *systray.MenuItem) {
 
 	w := watchData{watcher, &eventsMutex, &eventFIFO, &eventsAvailableChan, &wg, &pointsMutex, &watchPoints, &syncMutex, &syncTasks, &globalIgnores, suppressIgnores, retainSyncLogs, dryRun}
 
-	// do we need to perform any "clean slate" synchronizations on any remotes?
-	for key := range *w.points {
-		remotes := make([]*remoteData, 0)
-		for i := range (*w.points)[key].remotes {
-			remote := &(*w.points)[key].remotes[i]
-			if remote.cleanSlate {
-				log.Printf("warn: Scheduling \"%s:%s\" for a clean-slate sync.", key, remote.id)
-				remotes = append(remotes, remote)
-			}
-		}
-		if len(remotes) != 0 {
-			*w.syncTasks = append(*w.syncTasks, syncTask{key, remotes, key, (*w.points)[key]})
-		}
-	}
+	// if process predicates are currently triggered, this will block until they reset
+	scheduleCleanSlates(&w)
 
-	// the pipeline is broken into simple, cascading, threaded activities
+	// the processing pipeline is broken into simple, cascading, threaded activities
 
 	wg.Add(1)
 	go watchFilesystem(w, quitWatcherChan)
