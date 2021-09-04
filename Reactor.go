@@ -135,7 +135,7 @@ func run(mQuitOrig *systray.MenuItem) {
 	wg.Add(1)
 	go processRcloneSync(w, quitExecChan)
 
-	const watchMask = winfsnotify.FS_ALL_EVENTS & ^(winfsnotify.FS_ATTRIB|winfsnotify.FS_CLOSE) | winfsnotify.FS_IGNORED
+	const watchMask = winfsnotify.FS_ALL_EVENTS & ^(winfsnotify.FS_ATTRIB|winfsnotify.FS_CLOSE|winfsnotify.FS_ACCESS) | winfsnotify.FS_IGNORED
 	for key := range watchPoints {
 		remotes := make([]*remoteData, 0)
 		for i := range (*w.points)[key].remotes {
